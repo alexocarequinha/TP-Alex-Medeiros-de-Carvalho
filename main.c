@@ -10,14 +10,12 @@ int main(void) {
     MatchList *matches = ml_create();
     char buffer[256];
     
-    // 1. Carga de Dados (Lendo linhas inteiras com fgets)
     FILE *f_times = fopen("times.csv", "rt");
     if (f_times) {
-        fgets(buffer, sizeof(buffer), f_times); // ignorar cabeçalho
+        fgets(buffer, sizeof(buffer), f_times);
         int id;
         char name[50];
         while (fgets(buffer, sizeof(buffer), f_times)) {
-            // Leitura blindada para pegar strings com espaços, sem '\r' para evitar problemas
             if (sscanf(buffer, "%d,%49[^\n]", &id, name) == 2) {
                 tl_append(teams, team_create(id, name));
             }
@@ -27,7 +25,7 @@ int main(void) {
 
     FILE *f_partidas = fopen("partidas.csv", "rt");
     if (f_partidas) {
-        fgets(buffer, sizeof(buffer), f_partidas); // ignorar cabeçalho
+        fgets(buffer, sizeof(buffer), f_partidas);
         int id, t1, t2, g1, g2;
         while (fgets(buffer, sizeof(buffer), f_partidas)) {
             if (sscanf(buffer, "%d,%d,%d,%d,%d", &id, &t1, &t2, &g1, &g2) == 5) {
@@ -37,7 +35,6 @@ int main(void) {
         fclose(f_partidas);
     }
 
-    // 2. Apuração dos resultados
     int total_matches = ml_size(matches);
     for (int i = 0; i < total_matches; i++) {
         Match *m = ml_get(matches, i);
@@ -49,13 +46,11 @@ int main(void) {
         }
     }
 
-    // 3. Classificação (inserção ordenada noutra lista duplamente encadeada)
     TeamList *sorted = tl_create();
     for (int i = 0; i < tl_size(teams); i++) {
         tl_insert_ordered(sorted, tl_get(teams, i));
     }
 
-    // 4. Relatório (Imprimir na tela e Gravar no CSV)
     printf("Pos ID Time            V  E  D  GM GS S  PG\n");
     FILE *f_classificacao = fopen("classificacao.csv", "w");
     if (f_classificacao) {
@@ -65,7 +60,6 @@ int main(void) {
     for (int i = 0; i < tl_size(sorted); i++) {
         Team *t = tl_get(sorted, i);
         
-        // Impressão alinhada usando apenas os modificadores do printf (%-15s) ensinados
         printf("%-3d %-2d %-15s %-2d %-2d %-2d %-2d %-2d %-2d %d\n",
                i + 1, team_id(t), team_name(t),
                team_wins(t), team_draws(t), team_losses(t),
@@ -82,7 +76,6 @@ int main(void) {
     }
     if (f_classificacao) fclose(f_classificacao);
 
-    // 5. Resumo final
     printf("\n===== Resumo do campeonato =====\n");
     printf("Partidas disputadas: %d de 45\n", total_matches);
 
@@ -106,7 +99,6 @@ int main(void) {
         printf("Melhor ataque: %s (%d gols marcados)\n", team_name(best_attack), team_goals_scored(best_attack));
         printf("Melhor defesa: %s (%d gols sofridos)\n", team_name(best_defense), team_goals_conceded(best_defense));
 
-        // Encontrar maior goleada usando lógica simples (sem a biblioteca math e a função abs)
         Match *biggest_win = ml_get(matches, 0);
         int g1_inicial = match_g1(biggest_win);
         int g2_inicial = match_g2(biggest_win);
@@ -117,7 +109,6 @@ int main(void) {
             int m_g1 = match_g1(m);
             int m_g2 = match_g2(m);
             
-            // Operador ternário ensinado em aula para substituir o abs()
             int diff = m_g1 > m_g2 ? (m_g1 - m_g2) : (m_g2 - m_g1);
             
             if (diff > max_diff) { 
@@ -131,7 +122,6 @@ int main(void) {
         printf("Maior goleada: %s %d x %d %s\n", team_name(t1), match_g1(biggest_win), match_g2(biggest_win), team_name(t2));
     }
 
-    // Liberações de memória com prevenção de double-free
     tl_free(teams, 1);   
     tl_free(sorted, 0);  
     ml_free(matches);
